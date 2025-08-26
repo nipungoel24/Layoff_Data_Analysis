@@ -1,78 +1,61 @@
-Layoff Data Analysis
-This project demonstrates a comprehensive data cleaning and exploratory data analysis (EDA) workflow using SQL. It's an excellent portfolio piece for showcasing skills in data manipulation, data integrity, and extracting key insights.
+### Layoff Data Analysis Project
 
-README.md
-Project: Layoff Data Analysis with SQL
-This project focuses on a complete data cleaning and analysis process using SQL, from handling messy raw data to performing exploratory data analysis to uncover key trends in a dataset of company layoffs. The entire workflow is documented in a series of SQL scripts.
+This project showcases a complete data cleaning and analysis pipeline using SQL. It demonstrates proficiency in data manipulation, data integrity, and extracting key business insights from raw data. The entire workflow is documented in a series of structured SQL scripts.
 
-Project Steps
-The project is structured into three main phases:
+### Project Steps
 
-Data Cleaning: This phase involves identifying and correcting issues in the raw data, ensuring it is ready for analysis.
+The project is broken down into three logical phases:
 
-Exploratory Data Analysis (EDA): This phase uses the cleaned data to find insights and patterns.
+1.  **Data Cleaning:** This phase focuses on preparing the raw data for analysis by addressing common data quality issues.
+2.  **Exploratory Data Analysis (EDA):** This phase uses the cleaned data to uncover meaningful insights and patterns.
+3.  **Insights and Findings:** A summary of the key discoveries made during the analysis.
 
-Insights and Findings: A summary of key discoveries from the analysis.
+---
 
-Step 1: Data Cleaning
-This is a multi-step process to ensure the data is accurate and reliable.
+### Phase 1: Data Cleaning
 
-1. Remove Duplicates
-Objective: To identify and remove any identical rows that could skew the analysis.
+This is the most critical phase, where raw data is transformed into a clean and reliable dataset.
 
-Methodology:
+#### **1. Duplicate Removal**
 
-First, a new staging table (Layoffs_staging) was created to work with a copy of the original data (layoffs). This is a crucial step to preserve the original raw data.
+* **Objective:** To identify and remove any identical rows that could skew the analysis.
+* **Methodology:**
+    * A staging table (`layoffs_staging`) was created as a replica of the original `layoffs` table to ensure data safety.
+    * A Common Table Expression (CTE) was used with the `ROW_NUMBER()` window function. The `PARTITION BY` clause included all columns to identify true duplicates, where `row_num > 1`.
+    * A second staging table (`layoffs_staging2`) was created with a `row_num` column, allowing the duplicate rows to be safely deleted without affecting the primary table.
 
-A Common Table Expression (CTE) was used with the ROW_NUMBER() window function. The PARTITION BY clause grouped all columns to ensure that any row with a row_num greater than 1 was an exact duplicate.
+#### **2. Data Standardization**
 
-A second staging table (layoffs_staging2) was created with an additional row_num column to store the results of the window function. The duplicate rows (where row_num > 1) were then safely deleted from this table.
+* **Objective:** To ensure consistency and uniformity in the data, particularly for categorical text fields.
+* **Methodology:**
+    * The `TRIM()` function was applied to remove leading or trailing white spaces from the `company` column.
+    * Variations in `industry` and `country` names were identified using `SELECT DISTINCT`. `UPDATE` statements with `WHERE LIKE` were then used to standardize them (e.g., `Crypto%` to `Crypto`).
+    * The `date` column was converted from a text string to a proper `DATE` format using `STR_TO_DATE()` and `ALTER TABLE`.
 
-2. Standardize the Data
-Objective: To ensure consistency in the data, particularly for categorical text fields.
+#### **3. Handling Null and Blank Values**
 
-Methodology:
+* **Objective:** To handle missing data points effectively.
+* **Methodology:**
+    * Missing `industry` values were populated using a **self-join**. This query matched a company with a missing industry to another entry for the same company where the industry was known, then updated the missing value.
+    * After the update, all empty strings (`''`) in the `industry` column were converted to `NULL` for consistency.
 
-White Space: The TRIM() function was used to remove any leading or trailing white spaces from the company column.
+#### **4. Removing Unnecessary Data**
 
-Industry Names: The DISTINCT keyword was used to find variations in the industry column. The UPDATE statement with the LIKE operator was then used to standardize similar values, such as consolidating all Crypto% entries to simply 'Crypto'.
+* **Objective:** To finalize the cleaned dataset by removing irrelevant or un-usable information.
+* **Methodology:**
+    * Rows with no layoff information (where both `total_laid_off` and `percentage_laid_off` were `NULL`) were deleted.
+    * The temporary `row_num` column, created during the duplicate removal step, was dropped from the final table.
 
-Country Names: The same technique was applied to the country column to standardize values like 'United States.' to 'United States'.
+---
 
-Date Format: The date column was converted from a text string to a proper DATE format using STR_TO_DATE() and ALTER TABLE. This is essential for performing any time-based analysis.
+### Phase 2: Exploratory Data Analysis (EDA)
 
-3. Handling Null and Blank Values
-Objective: To fill in or remove missing data to improve data quality.
+This phase leverages the cleaned data to extract meaningful insights.
 
-Methodology:
+* **Key Metrics:** Queries were performed to identify the maximum number of layoffs and the highest percentage of a workforce laid off.
+* **Top Performers Analysis:** The data was grouped by `company`, `industry`, `country`, and `stage` to find the top entities with the most layoffs.
+* **Temporal Trends:** Analysis was conducted to understand layoff trends over time, identifying which years had the most significant number of layoffs.
 
-The industry column was checked for NULL or blank ('') values.
+### Conclusion
 
-A self-join was performed on the layoffs_staging2 table to intelligently populate missing industry values. The query looked for a company with a missing industry and joined it to another instance of the same company with a non-null industry, then updated the value. This technique is more efficient than manual updates.
-
-After cleaning, the blank values were updated to NULL to ensure all missing values are handled consistently.
-
-4. Remove Unnecessary Data
-Objective: To finalize the cleaned dataset by removing data that cannot be used for analysis.
-
-Methodology:
-
-Rows where both total_laid_off and percentage_laid_off were NULL were deleted. These rows contain no useful information and were removed to streamline the dataset.
-
-The temporary row_num column, which was created solely for identifying duplicates, was dropped from the table.
-
-Step 2: Exploratory Data Analysis (EDA)
-With a clean dataset, the following queries were used to gain initial insights.
-
-Maximum Layoffs: Queries were run to find the maximum number of people laid off and the highest percentage of a company's workforce affected. This provides a quick understanding of the scale of impact.
-
-Top Companies by Layoffs: A query grouped the data by company and summed the total_laid_off to identify which companies had the largest number of layoffs.
-
-Industry and Country Analysis: Similar queries were used to identify which industries and countries were most impacted by layoffs. This helps in understanding sector and geographic trends.
-
-Temporal Analysis: The YEAR() function was used to find the year with the highest number of layoffs, providing a high-level view of the temporal distribution of layoffs.
-
-Stage Analysis: The stage column was used to group data and find which company stages (e.g., Post-IPO, Series B) experienced the most layoffs.
-
-Conclusion
-This project demonstrates a complete data cleaning and analysis pipeline using SQL. The methods used, such as creating staging tables, using window functions for duplicate detection, and performing self-joins for data imputation, are all industry best practices. The analysis section shows how these skills can be applied to extract valuable insights from raw data.
+This project successfully demonstrates a full data cleaning and analysis pipeline. By applying industry best practices—including the use of staging tables, window functions for duplicate detection, and intelligent data imputation with self-joins—the project transforms raw data into a clean, insightful dataset. This work highlights key skills essential for any data-focused role.
